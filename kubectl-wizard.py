@@ -49,12 +49,24 @@ def get_pods(namespace):
         print(f"Error getting pods: {e.stderr}", file=sys.stderr)
         sys.exit(1)
 
-def select_option(options, prompt):
+def get_containers(namespace, pod):
+    try:
+        result = subprocess.run(['kubectl', 'get', 'pod', pod, '-n', namespace, '-o', 'jsonpath={.spec.containers[*].name}'],
+                                check=True, capture_output=True, text=True)
+        return result.stdout.split()
+    except subprocess.CalledProcessError as e:
+        print(f"Error getting containers: {e.stderr}", file=sys.stderr)
+        sys.exit(1)
+
+def select_option(options, prompt, default=None):
     while True:
         print(prompt)
         for i, option in enumerate(options, 1):
             print(f"{i}. {option}")
-        choice = input("Enter your choice (number): ")
+        if default:
+            choice = input(f"Enter your choice (number, default is {default}): ").strip() or str(default)
+        else:
+            choice = input("Enter your choice (number): ")
         if choice.isdigit() and 1 <= int(choice) <= len(options):
             return options[int(choice) - 1]
         print("Invalid selection. Please try again.")
@@ -88,25 +100,29 @@ def main():
                 '-n', namespace,
                 '--', 'sleep', 'infinity'
             ]
-        elif action == 'kubectl debug':
+        elif action == 'kubectl debug' or action == 'kubectl exec':
             pods = get_pods(namespace)
-            pod = select_option(pods, "Select a Pod to debug:")
-            command = [
-                'kubectl', 'debug', pod,
-                '-it',
-                '-n', namespace,
-                '--image=debian:bookworm',
-                '--', '/bin/bash'
-            ]
-        elif action == 'kubectl exec':
-            pods = get_pods(namespace)
-            pod = select_option(pods, "Select a Pod to execute command in:")
-            command = [
-                'kubectl', 'exec', '-it',
-                '-n', namespace,
-                pod,
-                '--', '/bin/bash'
-            ]
+            pod = select_option(pods, "Select a Pod:")
+            containers = get_containers(namespace, pod)
+            container = select_option(containers, "Select a container:", default=1)
+
+            if action == 'kubectl debug':
+                command = [
+                    'kubectl', 'debug', pod,
+                    '-it',
+                    '-n', namespace,
+                    '--image=debian:bookworm',
+                    '--container', container,
+                    '--', '/bin/bash'
+                ]
+            else:  # kubectl exec
+                command = [
+                    'kubectl', 'exec', '-it',
+                    '-n', namespace,
+                    pod,
+                    '-c', container,
+                    '--', '/bin/bash'
+                ]
         else:
             print(f"Unsupported action: {action}", file=sys.stderr)
             continue
