@@ -88,7 +88,6 @@ def main():
             use_context(selected_context)
             continue
 
-        # Select k8s namespace
         namespaces = get_namespaces()
         namespace = select_option(namespaces, "Select a Kubernetes namespace:")
 
@@ -116,13 +115,15 @@ def main():
                     '--', '/bin/bash'
                 ]
             else:  # kubectl exec
+                default_command = '/bin/bash'
+                user_command = input(f"Enter the command to execute (default: {default_command}): ").strip() or default_command
                 command = [
                     'kubectl', 'exec', '-it',
                     '-n', namespace,
                     pod,
                     '-c', container,
-                    '--', '/bin/bash'
-                ]
+                    '--'
+                ] + user_command.split()
         else:
             print(f"Unsupported action: {action}", file=sys.stderr)
             continue
