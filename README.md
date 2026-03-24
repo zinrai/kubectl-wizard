@@ -6,10 +6,11 @@
 
 - Interactive menu for selecting kubectl actions
 - Support for switching between Kubernetes contexts
-- Simplified execution of `kubectl run`, `kubectl debug`, and `kubectl exec` commands
+- Simplified execution of `kubectl run`, `kubectl debug`, `kubectl exec`, and `kubectl port-forward` commands
 - Namespace selection for all operations
 - Pod selection for debug and exec operations
 - Container selection for debug and exec operations
+- Service and port selection for port-forward operations
 - Confirmation prompts before executing commands
 
 ## Requirements
@@ -33,6 +34,7 @@ Follow the interactive prompts to select and execute kubectl commands.
 2. `kubectl run`: Create and run a new pod with a Debian container.
 3. `kubectl debug`: Debug an existing pod by creating a new debug container or attaching to an existing container.
 4. `kubectl exec`: Execute a command in an existing container within a pod. The default command is `/bin/bash`, but users can specify any command.
+5. `kubectl port-forward`: Forward local ports to a Kubernetes service. Services and ports are listed interactively. If the service has a single port, it is selected automatically. For services with multiple ports, select ports by number (comma-separated) or enter `all`.
 
 ## Workflow
 
@@ -42,6 +44,7 @@ Follow the interactive prompts to select and execute kubectl commands.
    - Select the namespace
    - Select the target pod (for debug and exec operations)
    - Select the target container (for debug and exec operations)
+   - Select the target service and ports (for port-forward operations)
    - For exec operations, optionally specify a command to run (default is `/bin/bash`)
 4. Review and confirm the command before execution.
 5. View the execution results.
